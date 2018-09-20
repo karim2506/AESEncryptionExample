@@ -1,28 +1,22 @@
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Signature;
 import java.util.Base64;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 
@@ -33,6 +27,7 @@ public class Driver {
 	static String decryptedFileDirectory = "src\\decryptedText.txt";
 	static String hashedFileDirectory = "src\\hashedText.txt";
 	static String keyFileDirectory = "src\\symmetricKey.txt";
+	static String signedFileDirectory = "src\\signedText.txt";
 
 	private static void fileProcessor(int cipherMode, String key, File inputFile, File outputFile) throws Exception {
 		Key secretKey = new SecretKeySpec(key.getBytes(), "AES");
@@ -85,6 +80,11 @@ public class Driver {
 
 		byte[] signature = privateSignature.sign();
 
+		FileOutputStream outputStream = new FileOutputStream(signedFileDirectory);
+		outputStream.write(signature);
+		
+		outputStream.close();
+		
 		return Base64.getEncoder().encodeToString(signature);
 	}
 
@@ -112,13 +112,8 @@ public class Driver {
 		File encryptedFile = new File(encryptedFileDirectory);
 		File decryptedFile = new File(decryptedFileDirectory);
 		File hashedFile = new File(hashedFileDirectory);
+		File signedFile = new File(signedFileDirectory);
 		File symmetricKeyFile = new File(keyFileDirectory);
-
-		// KeyPair pair = generateKeyPair();
-		// String signature = sign("foobar", pair.getPrivate());
-		// //Let's check the signature
-		// boolean isCorrect = verify("foobar", signature, pair.getPublic());
-		// System.out.println("Signature correct: " + isCorrect);
 
 		System.out.println("The initial file to Encrypt:");
 		printContent(inputFileDirectory);
@@ -126,12 +121,20 @@ public class Driver {
 		System.out.println();
 
 		System.out.println("The hash of the file:");
-		System.out.println(hashFile(inputFileDirectory));
-
+		String fileHash = hashFile(inputFileDirectory);
+		System.out.println(fileHash);
+		
 		System.out.println();
 
-		Driver.fileProcessor(Cipher.ENCRYPT_MODE, key, hashedFile, encryptedFile);
-		System.out.println("The encrypted file:");
+		System.out.println("Sign the hash:");
+		KeyPair signatureKey = generateKeyPair();
+		String signature = sign(fileHash, signatureKey.getPrivate());
+		System.out.println(signature);
+		
+		System.out.println();
+
+		Driver.fileProcessor(Cipher.ENCRYPT_MODE, key, inputFile, encryptedFile);
+		System.out.println("The encrypted input file:");
 		printContent(encryptedFileDirectory);
 
 		System.out.println();
@@ -149,9 +152,17 @@ public class Driver {
 		System.out.println();
 
 		Driver.fileProcessor(Cipher.DECRYPT_MODE, key, encryptedFile, decryptedFile);
-		System.out.println("The decrypted hash file:");
+		System.out.println("The decrypted input file:");
 		printContent(decryptedFileDirectory);
 
 		System.out.println();
+		
+		System.out.println("The hash of the decrypted file:");
+		String decryptedFileHash = hashFile(decryptedFileDirectory);
+		System.out.println(decryptedFileHash);
+		
+		
+		boolean isCorrect = verify(decryptedFileHash, signature, signatureKey.getPublic());
+		System.out.println("Signature correct: " + isCorrect);
 	}
 }
