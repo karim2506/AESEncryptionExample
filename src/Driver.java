@@ -112,8 +112,6 @@ public class Driver {
 		File inputFile = new File(inputFileDirectory);
 		File encryptedFile = new File(encryptedFileDirectory);
 		File decryptedFile = new File(decryptedFileDirectory);
-		File hashedFile = new File(hashedFileDirectory);
-		File signedFile = new File(signedFileDirectory);
 		File symmetricKeyFile = new File(keyFileDirectory);
 
 		System.out.println("The initial file to Encrypt:");
