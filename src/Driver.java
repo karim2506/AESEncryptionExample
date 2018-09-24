@@ -60,7 +60,7 @@ public class Driver {
 	}
 
 	private static String hashFile(String filePath) throws Exception {
-		MessageDigest md = MessageDigest.getInstance("MD5");
+		MessageDigest md = MessageDigest.getInstance("SHA-256");
 		md.update(Files.readAllBytes(Paths.get(filePath)));
 		byte[] digest = md.digest();
 
